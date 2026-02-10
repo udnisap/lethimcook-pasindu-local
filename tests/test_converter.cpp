@@ -1,6 +1,8 @@
 // test_converter.cpp - Tests for the units and converter modules
 #include <gtest/gtest.h>
 #include "lethimcook/units.hpp"
+#include "lethimcook/converter.hpp"
+#include <cmath>
 
 namespace lethimcook {
 namespace test {
@@ -206,7 +208,6 @@ TEST_F(GetConversionFactorTest, ThrowsForUnknownUnit) {
 class UnitTableCompletenessTest : public ::testing::Test {};
 
 TEST_F(UnitTableCompletenessTest, Has24VolumeUnitStrings) {
-    // 24 volume unit strings (not 25 as listed in task - verified against source)
     std::vector<std::string> volume_units = {
         "tsp", "teaspoon", "teaspoons",
         "tbsp", "tablespoon", "tablespoons",
@@ -263,10 +264,172 @@ TEST_F(UnitTableCompletenessTest, Has6CountUnitStrings) {
     }
 }
 
-// Placeholder for converter tests (to be implemented in Task 3)
-TEST(ConverterTest, PlaceholderTest) {
-    // This test always passes - actual converter tests will be added in Task 3
-    EXPECT_TRUE(true);
+// =============================================================================
+// Tests for volume conversions (mirrors TestVolumeConversions in Python)
+// =============================================================================
+
+class TestVolumeConversions : public ::testing::Test {};
+
+TEST_F(TestVolumeConversions, CupsToMl) {
+    double result = convert(2, "cups", "ml");
+    EXPECT_NEAR(result, 473.176, 0.01);
+}
+
+TEST_F(TestVolumeConversions, TspToTbsp) {
+    double result = convert(3, "tsp", "tbsp");
+    EXPECT_NEAR(result, 1.0, 0.01);
+}
+
+TEST_F(TestVolumeConversions, GallonToLiter) {
+    double result = convert(1, "gallon", "l");
+    EXPECT_NEAR(result, 3.785, 0.01);
+}
+
+TEST_F(TestVolumeConversions, FlozToMl) {
+    double result = convert(8, "fl oz", "ml");
+    EXPECT_NEAR(result, 236.588, 0.01);
+}
+
+TEST_F(TestVolumeConversions, SameUnit) {
+    double result = convert(5, "cup", "cup");
+    EXPECT_EQ(result, 5.0);
+}
+
+// =============================================================================
+// Tests for weight conversions (mirrors TestWeightConversions in Python)
+// =============================================================================
+
+class TestWeightConversions : public ::testing::Test {};
+
+TEST_F(TestWeightConversions, PoundsToGrams) {
+    double result = convert(1, "pound", "g");
+    EXPECT_NEAR(result, 453.592, 0.01);
+}
+
+TEST_F(TestWeightConversions, OzToGrams) {
+    double result = convert(16, "oz", "g");
+    EXPECT_NEAR(result, 453.592, 0.01);
+}
+
+TEST_F(TestWeightConversions, KgToLbs) {
+    double result = convert(1, "kg", "lb");
+    EXPECT_NEAR(result, 2.205, 0.01);
+}
+
+TEST_F(TestWeightConversions, GramsToOunces) {
+    double result = convert(100, "g", "oz");
+    EXPECT_NEAR(result, 3.527, 0.01);
+}
+
+// =============================================================================
+// Tests for temperature conversions (mirrors TestTemperatureConversions in Python)
+// =============================================================================
+
+class TestTemperatureConversions : public ::testing::Test {};
+
+TEST_F(TestTemperatureConversions, FahrenheitToCelsius) {
+    double result = convert(32, "fahrenheit", "celsius");
+    EXPECT_NEAR(result, 0.0, 0.01);
+
+    result = convert(212, "f", "c");
+    EXPECT_NEAR(result, 100.0, 0.01);
+
+    result = convert(350, "f", "c");
+    EXPECT_NEAR(result, 176.67, 0.1);
+}
+
+TEST_F(TestTemperatureConversions, CelsiusToFahrenheit) {
+    double result = convert(0, "celsius", "fahrenheit");
+    EXPECT_NEAR(result, 32.0, 0.01);
+
+    result = convert(100, "c", "f");
+    EXPECT_NEAR(result, 212.0, 0.01);
+}
+
+TEST_F(TestTemperatureConversions, CelsiusToKelvin) {
+    double result = convert(0, "celsius", "kelvin");
+    EXPECT_NEAR(result, 273.15, 0.01);
+}
+
+TEST_F(TestTemperatureConversions, KelvinToCelsius) {
+    double result = convert(273.15, "kelvin", "celsius");
+    EXPECT_NEAR(result, 0.0, 0.01);
+}
+
+// =============================================================================
+// Tests for count conversions (mirrors TestCountConversions in Python)
+// =============================================================================
+
+class TestCountConversions : public ::testing::Test {};
+
+TEST_F(TestCountConversions, CountToCount) {
+    double result = convert(5, "count", "item");
+    EXPECT_EQ(result, 5.0);
+}
+
+// =============================================================================
+// Tests for error handling (mirrors TestErrorHandling in Python)
+// =============================================================================
+
+class TestErrorHandling : public ::testing::Test {};
+
+TEST_F(TestErrorHandling, IncompatibleUnits) {
+    try {
+        convert(1, "cups", "grams");
+        FAIL() << "Expected std::invalid_argument";
+    } catch (const std::invalid_argument& e) {
+        std::string msg = e.what();
+        EXPECT_TRUE(msg.find("Cannot convert between") != std::string::npos)
+            << "Error message should contain 'Cannot convert between': " << msg;
+    }
+}
+
+TEST_F(TestErrorHandling, UnknownUnit) {
+    try {
+        convert(1, "blorg", "ml");
+        FAIL() << "Expected std::invalid_argument";
+    } catch (const std::invalid_argument& e) {
+        std::string msg = e.what();
+        EXPECT_TRUE(msg.find("Unknown unit") != std::string::npos)
+            << "Error message should contain 'Unknown unit': " << msg;
+    }
+}
+
+TEST_F(TestErrorHandling, TemperatureWeightMix) {
+    try {
+        convert(100, "celsius", "grams");
+        FAIL() << "Expected std::invalid_argument";
+    } catch (const std::invalid_argument& e) {
+        std::string msg = e.what();
+        EXPECT_TRUE(msg.find("Cannot convert between") != std::string::npos)
+            << "Error message should contain 'Cannot convert between': " << msg;
+    }
+}
+
+// =============================================================================
+// Tests for unit variations (mirrors TestUnitVariations in Python)
+// =============================================================================
+
+class TestUnitVariations : public ::testing::Test {};
+
+TEST_F(TestUnitVariations, TeaspoonVariations) {
+    double result1 = convert(1, "tsp", "ml");
+    double result2 = convert(1, "teaspoon", "ml");
+    EXPECT_NEAR(result1, result2, 0.001);
+}
+
+TEST_F(TestUnitVariations, PoundVariations) {
+    double result1 = convert(1, "lb", "g");
+    double result2 = convert(1, "lbs", "g");
+    double result3 = convert(1, "pound", "g");
+    EXPECT_NEAR(result1, result2, 0.001);
+    EXPECT_NEAR(result1, result3, 0.001);
+}
+
+TEST_F(TestUnitVariations, CaseInsensitive) {
+    double result1 = convert(1, "CUP", "ML");
+    double result2 = convert(1, "cup", "ml");
+    EXPECT_NEAR(result1, result2, 0.001);
 }
 
 } // namespace test

@@ -6,7 +6,15 @@
 
 namespace lethimcook {
 
-// Core conversion function - to be implemented in Task 3
+/**
+ * Convert a value from one unit to another.
+ *
+ * @param value The numeric value to convert
+ * @param from_unit The source unit
+ * @param to_unit The target unit
+ * @return The converted value
+ * @throws std::invalid_argument If units are incompatible or unknown
+ */
 double convert(double value, const std::string& from_unit, const std::string& to_unit);
 
 } // namespace lethimcook
